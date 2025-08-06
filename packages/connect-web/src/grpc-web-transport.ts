@@ -349,12 +349,16 @@ export function createGrpcWebTransport(
         },
         next: async (req) => {
           const fetch = options.fetch ?? globalThis.fetch;
+          const body = await createRequestBody(req.message);
+          const isStream = body instanceof ReadableStream; //method.methodKind == "server_streaming";
           const fRes = await fetch(req.url, {
             ...fetchOptions,
             method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
-            body: await createRequestBody(req.message),
+            body,
+            ...(isStream )? {duplex: "half"}
+            : {}
           });
           const { foundStatus, headerError } = validateResponse(
             fRes.status,

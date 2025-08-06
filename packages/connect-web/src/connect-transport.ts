@@ -307,15 +307,28 @@ export function createConnectTransport(
 
       async function createRequestBody(
         input: AsyncIterable<MessageShape<I>>,
-      ): Promise<Uint8Array> {
-        if (method.methodKind != "server_streaming") {
-          throw "The fetch API does not support streaming request bodies";
-        }
-        const r = await input[Symbol.asyncIterator]().next();
-        if (r.done == true) {
-          throw "missing request message";
-        }
-        return encodeEnvelope(0, serialize(r.value));
+      ): Promise<ReadableStream<Uint8Array<ArrayBufferLike>>> {
+
+       /* if (method.methodKind == "server_streaming") {
+          const r = await input[Symbol.asyncIterator]().next();
+          if (r.done == true) {
+            throw "missing request message";
+          }
+          return encodeEnvelope(0, serialize(r.value));
+        }*/
+
+        const stream = new ReadableStream<Uint8Array>({
+          async pull(controller) {
+            const r = await input[Symbol.asyncIterator]().next();
+            if (r.done == true) {
+              controller.close();
+              return;
+            }
+            const chunk = serialize(r.value);
+            controller.enqueue(encodeEnvelope(0, chunk));
+          },
+        });
+        return stream;
       }
 
       timeoutMs =
