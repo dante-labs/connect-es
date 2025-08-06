@@ -184,7 +184,7 @@ export function createConnectTransport(
           const useGet =
             options.useHttpGet === true &&
             method.idempotency ===
-              MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS;
+            MethodOptions_IdempotencyLevel.NO_SIDE_EFFECTS;
           let body: BodyInit | null = null;
           if (useGet) {
             req = transformConnectPostToGetRequest(
@@ -228,10 +228,10 @@ export function createConnectTransport(
             message: useBinaryFormat
               ? parse(new Uint8Array(await response.arrayBuffer()))
               : fromJson(
-                  method.output,
-                  (await response.json()) as JsonValue,
-                  getJsonOptions(options.jsonOptions),
-                ),
+                method.output,
+                (await response.json()) as JsonValue,
+                getJsonOptions(options.jsonOptions),
+              ),
             trailer: demuxedTrailer,
           };
         },
@@ -261,7 +261,7 @@ export function createConnectTransport(
       ) {
         const reader = createEnvelopeReadableStream(body).getReader();
         let endStreamReceived = false;
-        for (;;) {
+        for (; ;) {
           const result = await reader.read();
           if (result.done) {
             break;
@@ -315,6 +315,20 @@ export function createConnectTransport(
           }
           return encodeEnvelope(0, serialize(r.value));
         }*/
+
+
+        if (method.methodKind == "server_streaming") {
+          const r = await input[Symbol.asyncIterator]().next();
+          if (r.done == true) {
+            throw "missing request message";
+          }
+          return new ReadableStream<Uint8Array>({
+            async pull(controller) {
+              controller.enqueue(encodeEnvelope(0, serialize(r.value)));
+            },
+          });
+        }
+
 
         const stream = new ReadableStream<Uint8Array>({
           async pull(controller) {
