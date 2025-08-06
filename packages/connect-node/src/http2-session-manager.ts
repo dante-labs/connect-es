@@ -591,6 +591,9 @@ function ready(
       stream.once("close", () => {
         streamCount--;
         if (streamCount == 0) {
+          if (receivedGoAway) {
+            conn.destroy();
+          }
           conn.unref();
           resetPingInterval(); // reset to ping with the appropriate interval for "idle"
           resetIdleTimeout();

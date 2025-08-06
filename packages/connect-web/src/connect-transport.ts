@@ -308,8 +308,7 @@ export function createConnectTransport(
       async function createRequestBody(
         input: AsyncIterable<MessageShape<I>>,
       ): Promise<ReadableStream<Uint8Array<ArrayBufferLike>>> {
-
-       /* if (method.methodKind == "server_streaming") {
+        /* if (method.methodKind == "server_streaming") {
           const r = await input[Symbol.asyncIterator]().next();
           if (r.done == true) {
             throw "missing request message";
@@ -359,12 +358,15 @@ export function createConnectTransport(
         },
         next: async (req) => {
           const fetch = options.fetch ?? globalThis.fetch;
+          const body = await createRequestBody(req.message);
           const fRes = await fetch(req.url, {
             ...fetchOptions,
             method: req.requestMethod,
             headers: req.header,
             signal: req.signal,
-            body: await createRequestBody(req.message),
+            body,
+            // @ts-expect-error
+            duplex: "half",
           });
           validateResponse(
             method.methodKind,

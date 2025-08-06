@@ -245,8 +245,15 @@ export async function universalResponseToNodeResponse(
 async function* asyncIterableFromNodeServerRequest(
   request: NodeServerRequest,
 ): AsyncIterable<Uint8Array> {
+  let error: Error | undefined;
+  request.on("error", (e) => {
+    error = e;
+  });
   for await (const chunk of request) {
     yield chunk;
+  }
+  if (error !== undefined) {
+    throw error;
   }
 }
 
