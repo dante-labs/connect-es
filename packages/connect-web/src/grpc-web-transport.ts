@@ -357,9 +357,8 @@ export function createGrpcWebTransport(
             headers: req.header,
             signal: req.signal,
             body,
-            ...(isStream )? {duplex: "half"}
-            : {}
-          });
+            duplex: true
+          } as any);
           const { foundStatus, headerError } = validateResponse(
             fRes.status,
             fRes.headers,
